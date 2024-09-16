@@ -1,0 +1,9 @@
+{
+    "compilerOptions": {
+        "module": "Node16",
+        "target": "ES6"
+    },
+    "include": [
+        "**/*.js"
+    ]
+}
