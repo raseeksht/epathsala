@@ -11,7 +11,7 @@ const dbConnect = async () => {
             dbName = "epathsala_dev"
         } else {
             // production db
-            dbName = "ecommerce"
+            dbName = "epathsala"
         }
         const db = await mongoose.connect(dbHost + dbName)
         console.log(`mongodb connected to ${db.connection.host}:${db.connection.port}`);

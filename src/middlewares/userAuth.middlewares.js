@@ -23,7 +23,7 @@ const validateUser = (role = "any") => (req, res, next) => {
             throw new ApiError(401, `Forbidded for userType: ${decodedToken.userType}`)
         }
     } catch (err) {
-        throw new ApiError(401, "Invalid or expired token");
+        throw new ApiError(401, err.message || "Invalid or expired token");
     }
 }
 

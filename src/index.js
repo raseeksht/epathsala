@@ -5,7 +5,8 @@ import { dbConnect } from "./config/dbConfig.js";
 
 import { errorMiddleware } from "./middlewares/errors.middlewares.js";
 import userRoutes from './routes/user.routes.js';
-import urlRoutes from './routes/url.routes.js'
+import urlRoutes from './routes/url.routes.js';
+import organizationRoutes from './routes/organization.routes.js';
 
 
 
@@ -24,6 +25,7 @@ app.get("/", (req, res) => {
 
 app.use("/api/users", userRoutes);
 app.use("/api/url", urlRoutes);
+app.use("/api/organization", organizationRoutes);
 
 app.use(errorMiddleware)
 
