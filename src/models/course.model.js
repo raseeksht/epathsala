@@ -12,8 +12,15 @@ const courseSchema = Schema({
     creditHr: {
         type: String,
         required: true
+    },
+    organization: {
+        type: Schema.Types.ObjectId,
+        ref: "Organization"
     }
 })
+
+courseSchema.index({ name: 1, organization: 1 }, { unique: true });
+courseSchema.index({ courseId: 1, organization: 1 }, { unique: true });
 
 const courseModel = model("Course", courseSchema)
 

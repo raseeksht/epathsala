@@ -10,7 +10,7 @@ const errorMiddleware = (err, req, res, next) => {
     // logger.error(`${err.statusCode} ${err.message} ${req.originalUrl}`)
     res.status(statusCode)
     res.json({
-        statusCode: statusCode,
+        statusCode: statusCode
         message: err.message,
         success: false,
         stack: process.env.NODE_ENV == "prod" ? null : err.stack
