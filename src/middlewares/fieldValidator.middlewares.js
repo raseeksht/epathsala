@@ -1,18 +1,19 @@
-
 import { ApiError } from "../utils/ApiError.js";
 
-const fieldValidator = (fields) => (req, res, next) => {
-    const missingFields = []
+const fieldValidator =
+  (fields, inQuery = false) =>
+  (req, res, next) => {
+    const missingFields = [];
+    const queryOrBody = inQuery ? "query" : "body";
     for (let field of fields) {
-        if (!(field in req.body)) {
-            missingFields.push(field)
-        }
+      if (!(field in req[queryOrBody])) {
+        missingFields.push(field);
+      }
     }
     if (missingFields.length > 0) {
-        throw new ApiError(400, missingFields.join(", ") + " fields are missing")
+      throw new ApiError(400, missingFields.join(", ") + " fields are missing");
     }
-    next()
-}
+    next();
+  };
 
-
-export { fieldValidator }
+export { fieldValidator };
