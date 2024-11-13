@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Page Title</title>
+</head>
+<body>
+
+<h1>This is a Heading</h1>
+<p>This is a paragraph.</p>
+<form id="myform" method="post" action="https://rc-epay.esewa.com.np/api/epay/main/v2/form">
+
+<div id="fill">
+</div>
+
+<button type="submit">esewa</button>
+
+</form>
+
+<script>
+
+const data =
+{
+        "amount": 600,
+        "tax_amount": 0,
+        "total_amount": 600,
+        "transaction_uuid": "8fa9e3be-eb6e-4db1-bcdc-744d419a2733",
+        "product_code": "EPAYTEST",
+        "product_service_charge": 0,
+        "product_delivery_charge": 0,
+        "success_url": "http://localhost:8000/api/payment/esewasuccess",
+        "failure_url": "http://localhost:8000/api/payment/esewafailure",
+        "signed_field_names": "total_amount,transaction_uuid,product_code",
+        "signature": "NRRTB0YyRyKfxnZ0BWo5fGLhY7TYE4noOokkc+lgi7Q="
+    }
+    
+const keys= Object.keys(data);
+console.log(keys)
+const filler = document.getElementById("fill")
+for (let key of keys){
+	const htmlElem = `<input type="text" name="${key}" value="${data[key]}" />`
+	filler.insertAdjacentHTML("beforeend",htmlElem)
+
+}
+    
+
+</script>
+
+</body>
+</html>

@@ -14,6 +14,7 @@ import postsRoutes from "./routes/post.routes.js";
 import commentRoutes from "./routes/comment.routes.js";
 import likeRoutes from "./routes/like.routes.js";
 import videoRoutes from "./routes/videos.routes.js";
+import paymentRoutes from "./routes/paymentConfirmation.routes.js";
 
 dbConnect();
 
@@ -37,6 +38,7 @@ app.use("/api/posts", postsRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/likes", likeRoutes);
 app.use("/api/videos", videoRoutes);
+app.use("/api/payment", paymentRoutes);
 
 app.use(errorMiddleware);
 
