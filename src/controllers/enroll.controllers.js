@@ -8,15 +8,57 @@ import { txnModel } from "../models/transaction.model.js";
 import { generateHmacSignature } from "../utils/utils.functions.js";
 import axios from "axios";
 
+const checkCourseEnrollment = asyncHandler(async (req, res) => {
+  const courseId = req.params.courseId;
+
+  // const course = await courseModel.findOne({ _id: courseId });
+  const userCourse = await userCourseEnrollModel.findOne({ course: courseId });
+
+  if (!userCourse) throw new ApiError(404, "Not Enrolled");
+
+  if (userCourse.totalFee == 0) {
+    // free course, so no need to verify further
+    return res.json(new ApiResponse(200, "Payment Verified"));
+  }
+
+  const txn = await txnModel.findOne({ transactionUuid: userCourse.txnId });
+
+  if (!txn) throw new ApiError(404, "Transaction Incomplete");
+
+  if (txn.user.equals(req.user._id) && txn.status == "COMPLETE") {
+    res.json(new ApiResponse(200, "Payment Verified"));
+  } else {
+    throw new ApiError(403, "Unverified");
+  }
+});
+
 const getEnrolledCourse = asyncHandler(async (req, res) => {
   const organizationId = req.query.organizationId;
+  const allEnrolled = req.query.allEnrolled;
+
+  if (!(organizationId || allEnrolled)) {
+    throw new ApiError(
+      422,
+      "either organizatioId or allEnrolled should be present in query param"
+    );
+  }
 
   const enrolledCourses = await userCourseEnrollModel.find({
-    organization: organizationId,
+    // organization: organizationId,
+    $or: [
+      { organization: organizationId }, // Matches the specified organizationId
+      { organization: { $exists: true } }, // Matches any value of organization
+    ],
     user: req.user._id,
   });
 
-  return res.json(new ApiResponse(200, "okay", enrolledCourses));
+  return res.json(
+    new ApiResponse(
+      200,
+      `all course enrolled ${!allEnrolled ? "in provided organization" : ""}`,
+      enrolledCourses
+    )
+  );
 });
 
 const getSelectedCourse = async (courses, organizationId) => {
@@ -41,35 +83,41 @@ const getSelectedCourse = async (courses, organizationId) => {
   return selectedCourses;
 };
 
-const enrollInCourse = asyncHandler(async (req, res) => {
-  const { courses, organizationId } = req.body;
-  if (!Array.isArray(courses)) {
-    throw new ApiError(400, "courses field is expected to be of type Array");
-  }
-  const selectedCourses = await courseModel.find({
-    _id: { $in: courses },
-    organization: organizationId,
-  });
-
-  if (selectedCourses.length != courses.length) {
-    throw new ApiError(
-      400,
-      "one or more of course does not exists or doesn't belong to the given organization"
-    );
-  }
-
-  res.json(new ApiResponse(200, "take this", selectedCourses));
-});
-
 const startEnroll = asyncHandler(async (req, res) => {
   const { courses, organizationId, paymentMethod } = req.body;
   const selectedCourses = await getSelectedCourse(courses, organizationId);
+
+  const txUuid = uuidv4();
+
+  // const userCourseBulkWrite = [];
+
+  const userCourseBulkWrite = selectedCourses.map((course) => {
+    const userCourse = {
+      user: req.user._id,
+      course: course._id,
+      organization: course.organization,
+      enrollDate: new Date(),
+      totalFee: course.pricePerMonth,
+      txnId: txUuid,
+    };
+
+    return {
+      updateOne: {
+        filter: { course: course._id, user: req.user._id }, // Match on course and txnId
+        update: { $set: userCourse }, // Update the document if it exists
+        upsert: true, // Create a new document if it doesn't exist
+      },
+    };
+  });
 
   const totalPrice = selectedCourses.reduce((total, course) => {
     return total + course.pricePerMonth;
   }, 0);
 
-  const txUuid = uuidv4();
+  // console.log(userCourseBulkWrite);
+  const write = await userCourseEnrollModel.bulkWrite(userCourseBulkWrite);
+
+  console.log(write);
 
   // add to userCourse Enroll with all data + status pending
   // add status enrolled after payment is verified
@@ -85,7 +133,7 @@ const startEnroll = asyncHandler(async (req, res) => {
       product_code: "EPAYTEST",
       product_service_charge: 0,
       product_delivery_charge: 0,
-      success_url: process.env.BACKEND_URL + "/api/payment/esewasuccess",
+      success_url: process.env.BACKEND_URL + `/api/payment/esewasuccess`,
       failure_url: process.env.BACKEND_URL + "/api/payment/esewafailure",
       signed_field_names: "total_amount,transaction_uuid,product_code",
     };
@@ -125,4 +173,4 @@ const startEnroll = asyncHandler(async (req, res) => {
   res.json(new ApiResponse(200, "take this", selectedCourses));
 });
 
-export { getEnrolledCourse, enrollInCourse, startEnroll };
+export { getEnrolledCourse, startEnroll, checkCourseEnrollment };

@@ -26,6 +26,10 @@ const TransactionSchema = new Schema({
   fee: {
     type: Number,
   },
+  user: {
+    type: Schema.Types.ObjectId,
+    ref: "User",
+  },
 });
 
 const txnModel = model("Transaction", TransactionSchema);

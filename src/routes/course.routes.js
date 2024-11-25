@@ -6,6 +6,7 @@ import {
   editCourse,
   getCourse,
 } from "../controllers/course.controllers.js";
+
 import { fieldValidator } from "../middlewares/fieldValidator.middlewares.js";
 import enrollRoute from "./enroll.routes.js";
 

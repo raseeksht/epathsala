@@ -18,20 +18,27 @@
 
 <script>
 
-const data =
+const data1 =
 {
+    "statusCode": 200,
+    "message": "esewa payment form",
+    "data": {
         "amount": 600,
         "tax_amount": 0,
         "total_amount": 600,
-        "transaction_uuid": "8fa9e3be-eb6e-4db1-bcdc-744d419a2733",
+        "transaction_uuid": "f89b9aac-95e5-4a46-9553-dcf56fbb29ae",
         "product_code": "EPAYTEST",
         "product_service_charge": 0,
         "product_delivery_charge": 0,
         "success_url": "http://localhost:8000/api/payment/esewasuccess",
         "failure_url": "http://localhost:8000/api/payment/esewafailure",
         "signed_field_names": "total_amount,transaction_uuid,product_code",
-        "signature": "NRRTB0YyRyKfxnZ0BWo5fGLhY7TYE4noOokkc+lgi7Q="
-    }
+        "signature": "z4MBY9kjsCHk0/lSmYPsnLoIsW85vBOX0m5H2lbUiJ4="
+    },
+    "success": true
+}
+
+const data = data1.data
     
 const keys= Object.keys(data);
 console.log(keys)

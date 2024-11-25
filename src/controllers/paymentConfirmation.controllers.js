@@ -4,6 +4,7 @@ import { generateHmacSignature } from "../utils/utils.functions.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { txnModel } from "../models/transaction.model.js";
 import axios from "axios";
+import { userCourseEnrollModel } from "../models/userCourseEnroll.model.js";
 // import { orderModel } from "../models/orders.model.js";
 
 // const updateOrder = async (txUuid, txId) => {
@@ -34,6 +35,11 @@ const esewaSuccess = asyncHandler(async (req, res) => {
         "Invalid Signature. Couldn't validate transaction"
       );
     }
+
+    const userCourse = await userCourseEnrollModel.findOne({
+      txnId: d64decoded.transaction_uuid,
+    });
+
     const txn = await txnModel.create({
       transactionCode: d64decoded.transaction_code,
       status: d64decoded.status,
@@ -41,6 +47,7 @@ const esewaSuccess = asyncHandler(async (req, res) => {
       transactionUuid: d64decoded.transaction_uuid,
       productCode: d64decoded.product_code,
       signature: d64decoded.signature,
+      user: userCourse.user,
     });
 
     // updateOrder(d64decoded.transaction_uuid, txn._id)
