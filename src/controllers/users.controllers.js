@@ -37,6 +37,7 @@ const loginUser = asyncHandler(async (req, res) => {
   if (user && (await user.matchPassword(password))) {
     const reqFields = {
       _id: user._id,
+      fullname: user.fullname,
       username: user.username,
       email: user.email,
       userType: user.userType,
@@ -73,7 +74,7 @@ const editDetails = asyncHandler(async (req, res) => {
   if (!(username || number || address || profilePic)) {
     throw new ApiError(
       400,
-      "any of username, number,address or profile is required. All missing!"
+      "any of username, number,address,fullname or profilePic is required. All missing!"
     );
   }
   const user = await userModel
