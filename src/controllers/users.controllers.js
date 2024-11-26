@@ -42,6 +42,10 @@ const loginUser = asyncHandler(async (req, res) => {
       email: user.email,
       userType: user.userType,
       profilePic: user.profilePic,
+      municipality: user.municipality,
+      state: user.state,
+      country: user.country,
+      district: user.district,
     };
     const payload = {
       _id: user._id,
@@ -70,7 +74,17 @@ const loginUser = asyncHandler(async (req, res) => {
 
 const editDetails = asyncHandler(async (req, res) => {
   // only username number and address are allowed to change
-  const { fullname, username, number, address, profilePic } = req.body;
+  const {
+    fullname,
+    username,
+    number,
+    address,
+    profilePic,
+    municipality,
+    district,
+    state,
+    country,
+  } = req.body;
   if (!(username || number || address || profilePic)) {
     throw new ApiError(
       400,
@@ -85,6 +99,14 @@ const editDetails = asyncHandler(async (req, res) => {
   if (number) user.number = number;
   if (address) user.address = address;
   if (profilePic) user.profilePic = profilePic;
+  if (municipality) user.municipality = municipality;
+
+  if (district) user.district = district;
+
+  if (state) user.state = state;
+
+  if (country) user.country = country;
+
   try {
     const edited = await user.save();
     res.json(new ApiResponse(200, "Edited Successfully", edited));

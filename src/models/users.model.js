@@ -36,6 +36,18 @@ const userSchema = Schema(
     address: {
       type: String,
     },
+    municipality: {
+      type: String,
+    },
+    district: {
+      type: String,
+    },
+    state: {
+      type: String,
+    },
+    country: {
+      type: String,
+    },
     use2FA: {
       type: Boolean,
       default: false,
