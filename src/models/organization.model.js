@@ -1,22 +1,19 @@
 import { Schema, model } from "mongoose";
 
+const creatorSchema = Schema({
+  name: {
+    type: String,
+    unique: true,
+  },
+  description: {
+    type: String,
+  },
+  user: {
+    type: Schema.Types.ObjectId,
+    ref: "User",
+  },
+});
 
-const organizationSchema = Schema({
-    name: {
-        type: String,
-        unique: true
-    },
-    description: {
-        type: String
-    },
-    admin: {
-        type: Schema.Types.ObjectId,
-        ref: "User"
-    }
+const creatorModel = model("Creator", organizationSchema);
 
-})
-
-
-const organizationModel = model("Organization", organizationSchema);
-
-export { organizationModel };
+export { creatorModel };

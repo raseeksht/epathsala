@@ -5,11 +5,19 @@ const videoSchema = Schema({
     type: String,
     required: true,
   },
+  uuid: {
+    type: String,
+    required: true,
+  },
   description: {
     type: String,
     required: true,
   },
-  course_ref: {
+  manifestFile: {
+    type: String,
+    required: true,
+  },
+  course: {
     type: Schema.Types.ObjectId,
     ref: "Course",
   },

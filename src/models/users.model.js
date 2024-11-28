@@ -73,7 +73,7 @@ userSchema.methods.matchPassword = async function (password) {
 };
 
 userSchema.methods.generateAccessToken = function (payload) {
-  return jwt.sign(payload, process.env.JWT_ACCESS_SECRET, { expiresIn: "1d" });
+  return jwt.sign(payload, process.env.JWT_ACCESS_SECRET, { expiresIn: "10d" });
 };
 
 userSchema.methods.generateRefreshToken = function (payload) {

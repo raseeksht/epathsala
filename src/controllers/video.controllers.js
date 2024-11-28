@@ -3,8 +3,11 @@ import { v4 as uuidv4 } from "uuid";
 import { videoQueue } from "../utils/worker.js";
 import path from "path";
 import { fileURLToPath } from "url";
+import { videoModel } from "../models/video.model.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
 
 const handleVideoUpload = asyncHandler(async (req, res) => {
+  const { title, description, course } = req.body;
   const vId = uuidv4();
   const videoPath = req.file.path;
 
@@ -21,12 +24,21 @@ const handleVideoUpload = asyncHandler(async (req, res) => {
   });
   //   console.log(job);
 
-  const videoUrl = `http://localhost:8000/${outputPath}/master.m3u8`;
+  const videoUrl = `${process.env.BACKEND_URL}/${outputPath}/master.m3u8`;
+
+  const video = await videoModel.create({
+    title,
+    description,
+    course,
+    uuid: vId,
+    manifestFile: videoUrl,
+  });
   res.json({
     message: "video is converting to hls format",
     videoUrl,
     videoId: vId,
     taskId: job.id,
+    video,
   });
 });
 
@@ -54,4 +66,10 @@ const checkProgress = asyncHandler(async (req, res) => {
   res.json(status);
 });
 
-export { handleVideoUpload, checkProgress };
+const getVideo = asyncHandler(async (req, res) => {
+  const courseId = req.query.courseId;
+  const videos = await videoModel.find({ course: courseId });
+  res.json(new ApiResponse(200, "video", videos));
+});
+
+export { handleVideoUpload, checkProgress, getVideo };

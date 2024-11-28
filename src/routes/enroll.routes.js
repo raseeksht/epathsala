@@ -33,7 +33,7 @@ router.get(
 
 router.post(
   "/startenroll",
-  fieldValidator(["courses", "organizationId", "paymentMethod"]),
+  fieldValidator(["courses", "paymentMethod"]),
   validateUser("any"),
   startEnroll
 );

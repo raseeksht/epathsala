@@ -12,9 +12,9 @@ const userCourseEnrollSchema = Schema(
       ref: "Course",
       required: true,
     },
-    organization: {
+    creator: {
       type: Schema.Types.ObjectId,
-      ref: "Organization",
+      ref: "User",
     },
     enrollDate: {
       type: Schema.Types.Date,

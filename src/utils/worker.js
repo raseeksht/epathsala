@@ -24,6 +24,7 @@ const videoQueue = new Queue("video transcode", {
 });
 
 videoQueue.process(async function (job) {
+  console.log("got new process");
   return new Promise(async (resolve, reject) => {
     try {
       const { outputPath, videoPath } = job.data;
