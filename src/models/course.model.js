@@ -42,6 +42,10 @@ const courseSchema = Schema({
     type: Number,
     required: true,
   },
+  visible: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 courseSchema.pre("deleteOne", async function (next) {

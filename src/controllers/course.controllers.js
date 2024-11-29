@@ -124,19 +124,27 @@ const getAllCourseByUser = asynchHandler(async (req, res) => {
 });
 
 const courseFilterSearch = asynchHandler(async (req, res) => {
-  let { name, isPaid, level } = req.query;
-  // isPaid = isPaid == "true" ? true : false;
+  let { title, isPaid, level, visible } = req.query;
 
   try {
     const query = {
       $and: [
-        name ? { name: { $regex: name, $options: "i" } } : {}, // Add condition for name if provided
-        level ? { level: { $regex: level, $options: "i" } } : {}, // Add condition for level if provided
-        isPaid === "false" ? { price: 0 } : { price: { $gt: 0 } },
-      ],
+        title ? { title: { $regex: title, $options: "i" } } : {},
+        level ? { level: { $regex: level, $options: "i" } } : {},
+        isPaid === "false"
+          ? { price: 0 }
+          : isPaid === "true"
+          ? { price: { $gt: 0 } }
+          : {},
+        { visible: true },
+      ].filter((condition) => Object.keys(condition).length > 0),
     };
 
+    console.log(query);
+
     const courses = await courseModel.find(query);
+
+    console.log(courses);
 
     res.json(new ApiResponse(200, "course search filter result", courses));
   } catch (err) {
