@@ -32,6 +32,10 @@ const userCourseEnrollSchema = Schema(
       type: String,
       required: true,
     },
+    txnStatus: {
+      type: String,
+      default: false,
+    },
   },
   {
     timestamps: true,

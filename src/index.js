@@ -16,6 +16,7 @@ import likeRoutes from "./routes/like.routes.js";
 import videoRoutes from "./routes/videos.routes.js";
 import paymentRoutes from "./routes/paymentConfirmation.routes.js";
 import categoryRoutes from "./routes/category.routes.js";
+import dashboardRoutes from "./routes/dashboard.routes.js";
 
 dbConnect();
 
@@ -41,6 +42,7 @@ app.use("/api/likes", likeRoutes);
 app.use("/api/videos", videoRoutes);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/category", categoryRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 
 app.use(errorMiddleware);
 
