@@ -5,11 +5,22 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { videoModel } from "../models/video.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import { courseModel } from "../models/course.model.js";
+import { ApiError } from "../utils/ApiError.js";
 
 const handleVideoUpload = asyncHandler(async (req, res) => {
   const { title, description, course } = req.body;
   const vId = uuidv4();
   const videoPath = req.file.path;
+
+  const selectedCourse = await courseModel.findOne({ course });
+  if (!selectedCourse) {
+    throw new ApiError(404, "Course Does not Exists");
+  }
+
+  if (selectedCourse.creator.equals(req.user._id)) {
+    throw new ApiError(403, "Cannot upload to this course.");
+  }
 
   // return res.send(videoPath);
   const outputPath = `uploads/videos/${vId}`;
@@ -33,6 +44,10 @@ const handleVideoUpload = asyncHandler(async (req, res) => {
     uuid: vId,
     manifestFile: videoUrl,
   });
+
+  selectedCourse.visible = true;
+  await selectedCourse.save();
+
   res.json({
     message: "video is converting to hls format",
     videoUrl,
