@@ -12,9 +12,9 @@ const userCourseEnrollSchema = Schema(
       ref: "Course",
       required: true,
     },
-    organization: {
+    creator: {
       type: Schema.Types.ObjectId,
-      ref: "Organization",
+      ref: "User",
     },
     enrollDate: {
       type: Schema.Types.Date,
@@ -31,6 +31,10 @@ const userCourseEnrollSchema = Schema(
     txnId: {
       type: String,
       required: true,
+    },
+    txnStatus: {
+      type: String,
+      default: false,
     },
   },
   {

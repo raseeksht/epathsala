@@ -7,12 +7,15 @@ import axios from "axios";
 import { userCourseEnrollModel } from "../models/userCourseEnroll.model.js";
 // import { orderModel } from "../models/orders.model.js";
 
-// const updateOrder = async (txUuid, txId) => {
-//     const set = await orderModel.updateOne({ txUuid }, {
-//         $set: { transaction: txId }
-//     })
-//     console.log(set)
-// }
+const updateOrder = async (txUuid, status) => {
+  const set = await userCourseEnrollModel.updateMany(
+    { txnId: txUuid },
+    {
+      $set: { txnStatus: status },
+    }
+  );
+  console.log(set);
+};
 
 const esewaSuccess = asyncHandler(async (req, res) => {
   const data = req.query.data;
@@ -50,7 +53,7 @@ const esewaSuccess = asyncHandler(async (req, res) => {
       user: userCourse.user,
     });
 
-    // updateOrder(d64decoded.transaction_uuid, txn._id)
+    updateOrder(d64decoded.transaction_uuid, d64decoded.status);
 
     res.redirect(
       process.env.FRONTEND_URL +

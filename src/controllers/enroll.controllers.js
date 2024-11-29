@@ -33,35 +33,15 @@ const checkCourseEnrollment = asyncHandler(async (req, res) => {
 });
 
 const getEnrolledCourse = asyncHandler(async (req, res) => {
-  const organizationId = req.query.organizationId;
-  const allEnrolled = req.query.allEnrolled;
-
-  if (!(organizationId || allEnrolled)) {
-    throw new ApiError(
-      422,
-      "either organizatioId or allEnrolled should be present in query param"
-    );
-  }
-
   const enrolledCourses = await userCourseEnrollModel.find({
     // organization: organizationId,
-    $or: [
-      { organization: organizationId }, // Matches the specified organizationId
-      { organization: { $exists: true } }, // Matches any value of organization
-    ],
     user: req.user._id,
   });
 
-  return res.json(
-    new ApiResponse(
-      200,
-      `all course enrolled ${!allEnrolled ? "in provided organization" : ""}`,
-      enrolledCourses
-    )
-  );
+  return res.json(new ApiResponse(200, `all course enrolled`, enrolledCourses));
 });
 
-const getSelectedCourse = async (courses, organizationId) => {
+const getSelectedCourse = async (courses) => {
   if (!Array.isArray(courses)) {
     throw new ApiError(400, "courses field is expected to be of type Array");
   }
@@ -70,22 +50,18 @@ const getSelectedCourse = async (courses, organizationId) => {
   }
   const selectedCourses = await courseModel.find({
     _id: { $in: courses },
-    organization: organizationId,
   });
 
   if (selectedCourses.length != courses.length) {
-    throw new ApiError(
-      400,
-      "one or more of course does not exists or doesn't belong to the given organization"
-    );
+    throw new ApiError(400, "one or more of course does not exists");
   }
 
   return selectedCourses;
 };
 
 const startEnroll = asyncHandler(async (req, res) => {
-  const { courses, organizationId, paymentMethod } = req.body;
-  const selectedCourses = await getSelectedCourse(courses, organizationId);
+  const { courses, paymentMethod } = req.body;
+  const selectedCourses = await getSelectedCourse(courses);
 
   const txUuid = uuidv4();
 
@@ -95,9 +71,9 @@ const startEnroll = asyncHandler(async (req, res) => {
     const userCourse = {
       user: req.user._id,
       course: course._id,
-      organization: course.organization,
+      creator: course.creator,
       enrollDate: new Date(),
-      totalFee: course.pricePerMonth,
+      totalFee: course.price,
       txnId: txUuid,
     };
 
@@ -111,7 +87,7 @@ const startEnroll = asyncHandler(async (req, res) => {
   });
 
   const totalPrice = selectedCourses.reduce((total, course) => {
-    return total + course.pricePerMonth;
+    return total + course.price;
   }, 0);
 
   // console.log(userCourseBulkWrite);

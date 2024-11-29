@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from "uuid";
 import {
   handleVideoUpload,
   checkProgress,
+  getVideo,
 } from "../controllers/video.controllers.js";
 import path from "path";
 import { createDirIfNotExists } from "../utils/utils.js";
@@ -38,6 +39,13 @@ router.post(
   //   fieldValidator(["video", "title", "description"]),
   upload.single("video"),
   handleVideoUpload
+);
+
+router.get(
+  "/",
+  validateUser("any"),
+  fieldValidator(["courseId"], true),
+  getVideo
 );
 
 router.get("/progress", validateUser("teacher"), checkProgress);

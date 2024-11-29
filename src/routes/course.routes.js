@@ -2,8 +2,10 @@ import { Router } from "express";
 import validateUser from "../middlewares/userAuth.middlewares.js";
 import {
   addCourse,
+  courseFilterSearch,
   deleteCourse,
   editCourse,
+  getAllCourseByUser,
   getCourse,
 } from "../controllers/course.controllers.js";
 
@@ -14,15 +16,20 @@ const router = Router();
 
 router.use("/enroll", enrollRoute);
 
+router.get("/search", courseFilterSearch);
+router.get("/get-all-couse-by-user/:userId", getAllCourseByUser);
+
 router.post(
   "/",
   validateUser("teacher"),
   fieldValidator([
-    "name",
-    "courseId",
-    "creditHr",
-    "organization",
-    "pricePerMonth",
+    "title",
+    "subTitle",
+    "level",
+    "category",
+    "description",
+    "thumbnail",
+    "price",
   ]),
   addCourse
 );

@@ -1,30 +1,40 @@
 import asynchHandler from "express-async-handler";
-import { organizationModel } from "../models/organization.model.js";
+// import { organizationModel } from "../models/organization.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { courseModel } from "../models/course.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 
 const addCourse = asynchHandler(async (req, res) => {
-  const { name, courseId, creditHr, organization, pricePerMonth } = req.body;
+  const { title, subTitle, price, description, thumbnail, level, category } =
+    req.body;
+
+  // check if course is already present for the user
+  if (await courseModel.findOne({ title, creator: req.user._id })) {
+    throw new ApiResponse(400, "You already have course with that name");
+  }
 
   // check if organization exists
-  const org = await organizationModel.findOne({ _id: organization });
-  if (!org) {
-    throw new ApiError(400, "Organization does not exists!!");
-  }
+  // const org = await organizationModel.findOne({ _id: organization });
+  // if (!org) {
+  //   throw new ApiError(400, "Organization does not exists!!");
+  // }
 
-  if (!org.admin.equals(req.user._id)) {
-    throw new ApiError(403, "You are not the admin of this organization");
-  }
+  // if (!org.admin.equals(req.user._id)) {
+  //   throw new ApiError(403, "You are not the admin of this organization");
+  // }
 
   // const orgCourses = await courseModel.find({ organization })
+  console.log(req.body);
   try {
     const course = await courseModel.create({
-      name,
-      courseId,
-      creditHr,
-      organization,
-      pricePerMonth,
+      title,
+      subTitle,
+      level,
+      category,
+      price,
+      description,
+      thumbnail,
+      creator: req.user._id,
     });
 
     if (course) {
@@ -43,41 +53,46 @@ const addCourse = asynchHandler(async (req, res) => {
 });
 
 const editCourse = asynchHandler(async (req, res) => {
-  const { name, courseId, creditHr, pricePerMonth } = req.body;
+  const { name, price, description, thumbnail } = req.body;
   const _id = req.params._id;
-  const org = await courseModel.findOne({ _id }).populate("organization");
-  if (!org) {
+  const course = await courseModel.findOne({ _id }).populate({
+    path: "creator",
+    select: "username email profilePic",
+  });
+  if (!course) {
     throw new ApiError(400, "that Course does not exists!" + _id);
   }
 
-  if (!name && !courseId && !creditHr) {
+  if (!name && !price && !description && !thumbnail) {
     throw new ApiError(
       400,
-      "Either one or many of (name, courseId or creditHr) is required."
+      "Either one or many of (name, price, desription, thumbnail) is required."
     );
   }
-  if (!org.organization.admin.equals(req.user._id)) {
+  if (!course.creator._id.equals(req.user._id)) {
     throw new ApiError(403, "You do not have required permission");
   }
 
-  if (name) org.name = name;
-  if (courseId) org.courseId = courseId;
-  if (creditHr) org.creditHr = creditHr;
-  if (pricePerMonth) org.pricePerMonth = pricePerMonth;
-  // organization in course cannot be changed once created;
+  if (name) course.name = name;
+  if (price) course.price = price;
+  if (description) course.description = description;
+  if (thumbnail) course.thumbnail = thumbnail;
 
-  await org.save();
+  await course.save();
 
-  res.json(new ApiResponse(200, "Edit Successfully", org));
+  res.json(new ApiResponse(200, "Edit Successfully", course));
 });
 
 const deleteCourse = asynchHandler(async (req, res) => {
   const _id = req.params._id;
-  const course = await courseModel.findOne({ _id }).populate("organization");
+  const course = await courseModel.findOne({ _id }).populate({
+    path: "creator",
+    select: "username email profilePic",
+  });
   if (!course) {
     throw new ApiError(404, "Course does not exits.");
   }
-  if (!course.organization.admin.equals(req.user._id)) {
+  if (!course.creator.equals(req.user._id)) {
     throw new ApiError(403, "You do not have required permission");
   }
 
@@ -91,11 +106,50 @@ const deleteCourse = asynchHandler(async (req, res) => {
 
 const getCourse = asynchHandler(async (req, res) => {
   const _id = req.params._id;
-  const course = await courseModel.findOne({ _id }).populate("organization");
+  const course = await courseModel.findOne({ _id }).populate({
+    path: "creator",
+    select: "username email profilePic",
+  });
   if (!course) {
     throw new ApiError(400, "404 course not found");
   }
   res.json(new ApiResponse(200, "course fetched", course));
 });
 
-export { addCourse, editCourse, getCourse, deleteCourse };
+const getAllCourseByUser = asynchHandler(async (req, res) => {
+  const userId = req.params.userId;
+
+  const courses = await courseModel.find({ creator: userId });
+  res.json(new ApiResponse(200, "all course by user", courses));
+});
+
+const courseFilterSearch = asynchHandler(async (req, res) => {
+  let { name, isPaid, level } = req.query;
+  // isPaid = isPaid == "true" ? true : false;
+
+  try {
+    const query = {
+      $and: [
+        name ? { name: { $regex: name, $options: "i" } } : {}, // Add condition for name if provided
+        level ? { level: { $regex: level, $options: "i" } } : {}, // Add condition for level if provided
+        isPaid === "false" ? { price: 0 } : { price: { $gt: 0 } },
+      ],
+    };
+
+    const courses = await courseModel.find(query);
+
+    res.json(new ApiResponse(200, "course search filter result", courses));
+  } catch (err) {
+    console.log(err.message);
+    throw new ApiError(400, "search failed " + err.message);
+  }
+});
+
+export {
+  addCourse,
+  editCourse,
+  getCourse,
+  deleteCourse,
+  getAllCourseByUser,
+  courseFilterSearch,
+};
