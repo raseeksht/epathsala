@@ -7,6 +7,7 @@ import {
   editCourse,
   getAllCourseByUser,
   getCourse,
+  getMyCourse,
 } from "../controllers/course.controllers.js";
 
 import { fieldValidator } from "../middlewares/fieldValidator.middlewares.js";
@@ -18,6 +19,8 @@ router.use("/enroll", enrollRoute);
 
 router.get("/search", courseFilterSearch);
 router.get("/get-all-couse-by-user/:userId", getAllCourseByUser);
+
+router.get("/mycourses", validateUser("teacher"), getMyCourse);
 
 router.post(
   "/",

@@ -154,15 +154,10 @@ const calculateTotalPage = async (query, page, coursePerPage) => {
   return { totalResult, totalPage, page, coursePerPage };
 };
 
-const filterCourse = async ({
-  creator,
-  title,
-  isPaid,
-  level,
-  category,
-  page,
-  coursePerPage,
-}) => {
+const filterCourse = async (
+  { creator, title, isPaid, level, category, page, coursePerPage },
+  ownCourse = false
+) => {
   page = Number(page) || 1;
   if (page <= 0) page = 1;
   coursePerPage = Number(coursePerPage) || 2;
@@ -177,7 +172,7 @@ const filterCourse = async ({
         : isPaid === "true"
         ? { price: { $gt: 0 } }
         : {},
-      { visible: true },
+      ownCourse ? {} : { visible: true },
     ].filter((condition) => Object.keys(condition).length > 0),
   };
 
@@ -224,6 +219,28 @@ const courseFilterSearch = asynchHandler(async (req, res) => {
   }
 });
 
+const getMyCourse = asynchHandler(async (req, res) => {
+  const { page, coursePerPage, name, isPaid, category, latest, title, level } =
+    req.query;
+
+  const myCourse = await filterCourse(
+    {
+      page,
+      coursePerPage,
+      name,
+      isPaid,
+      category,
+      latest,
+      title,
+      level,
+      creator: req.user._id,
+    },
+    true
+  );
+
+  res.json(new ApiResponse(200, "take your course", myCourse));
+});
+
 export {
   addCourse,
   editCourse,
@@ -231,4 +248,5 @@ export {
   deleteCourse,
   getAllCourseByUser,
   courseFilterSearch,
+  getMyCourse,
 };
