@@ -25,6 +25,9 @@ const videoSchema = Schema({
     type: Schema.Types.ObjectId,
     ref: "User",
   },
+  thumbnail: {
+    type: String,
+  },
   likes: {
     type: Number,
     default: 0,

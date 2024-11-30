@@ -35,6 +35,7 @@ const addCourse = asynchHandler(async (req, res) => {
       throw new ApiError(500, "failed to add the course");
     }
   } catch (err) {
+    console.log(err);
     if (err.code == 11000) {
       throw new ApiError(400, `Duplicate '${Object.keys(err.keyValue)[0]}'`);
     }
