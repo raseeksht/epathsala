@@ -3,6 +3,7 @@ import asynchHandler from "express-async-handler";
 import { ApiError } from "../utils/ApiError.js";
 import { courseModel } from "../models/course.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import { videoModel } from "../models/video.model.js";
 
 const addCourse = asynchHandler(async (req, res) => {
   const { title, subTitle, price, description, thumbnail, level, category } =
@@ -114,20 +115,28 @@ const deleteCourse = asynchHandler(async (req, res) => {
 
 const getCourse = asynchHandler(async (req, res) => {
   const _id = req.params._id;
-  const course = await courseModel.findOne({ _id }).populate([
-    {
-      path: "creator",
-      select: "username email profilePic",
-    },
-    {
-      path: "category",
-      select: "name",
-    },
-  ]);
+  const course = await courseModel
+    .findOne({ _id })
+    .populate([
+      {
+        path: "creator",
+        select: "username email profilePic",
+      },
+      {
+        path: "category",
+        select: "name",
+      },
+    ])
+    .lean();
+  const videos = await videoModel.find({ course: _id }).lean();
+
+  const combined = { ...course, lectures: [...videos] };
+
+  course.lectures = videos;
   if (!course) {
     throw new ApiError(400, "404 course not found");
   }
-  res.json(new ApiResponse(200, "course fetched", course));
+  res.json(new ApiResponse(200, "course fetched", combined));
 });
 
 const getAllCourseByUser = asynchHandler(async (req, res) => {
