@@ -12,13 +12,17 @@ const handleVideoUpload = asyncHandler(async (req, res) => {
   const { title, description, course } = req.body;
   const vId = uuidv4();
   const videoPath = req.file.path;
-
+  console.log(course);
   const selectedCourse = await courseModel.findOne({ _id: course });
+  console.log(selectedCourse);
   if (!selectedCourse) {
     throw new ApiError(404, "Course Does not Exists");
   }
 
-  if (selectedCourse.creator.equals(req.user._id)) {
+  // console.log(req.user._id);
+  // console.log(selectedCourse.creator);
+  // console.log()
+  if (!selectedCourse.creator.equals(req.user._id)) {
     throw new ApiError(403, "Cannot upload to this course.");
   }
 
