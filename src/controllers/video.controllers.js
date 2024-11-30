@@ -13,7 +13,7 @@ const handleVideoUpload = asyncHandler(async (req, res) => {
   const vId = uuidv4();
   const videoPath = req.file.path;
 
-  const selectedCourse = await courseModel.findOne({ course });
+  const selectedCourse = await courseModel.findOne({ _id: course });
   if (!selectedCourse) {
     throw new ApiError(404, "Course Does not Exists");
   }
