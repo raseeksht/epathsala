@@ -2,51 +2,48 @@ import { Schema, model } from "mongoose";
 import { videoModel } from "./video.model.js";
 import fs from "fs";
 
-const courseSchema = Schema({
-  title: {
-    type: String,
-    required: true,
+const courseSchema = Schema(
+  {
+    title: {
+      type: String,
+      required: true,
+    },
+    subTitle: {
+      type: String,
+    },
+    description: {
+      type: String,
+      required: true,
+    },
+    thumbnail: {
+      type: String,
+      required: true,
+    },
+    level: {
+      type: String,
+      enum: ["Beginner", "Intermediate", "Advanced"],
+    },
+    category: {
+      type: Schema.Types.ObjectId,
+      ref: "Category",
+    },
+    creator: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+    },
+    price: {
+      type: Number,
+      required: true,
+    },
+    visible: {
+      type: Boolean,
+      default: false,
+    },
   },
-  subTitle: {
-    type: String,
-  },
-  // courseId: {
-  //   type: String,
-  //   required: true,
-  // },
-  // creditHr: {
-  //   type: String,
-  //   required: true,
-  // },
-  description: {
-    type: String,
-    required: true,
-  },
-  thumbnail: {
-    type: String,
-    required: true,
-  },
-  level: {
-    type: String,
-    enum: ["Beginner", "Intermediate", "Advanced"],
-  },
-  category: {
-    type: Schema.Types.ObjectId,
-    ref: "Category",
-  },
-  creator: {
-    type: Schema.Types.ObjectId,
-    ref: "User",
-  },
-  price: {
-    type: Number,
-    required: true,
-  },
-  visible: {
-    type: Boolean,
-    default: false,
-  },
-});
+  {
+    timestamps: true,
+  }
+);
 
 courseSchema.pre("deleteOne", async function (next) {
   console.log("Deleting videos related to this course");

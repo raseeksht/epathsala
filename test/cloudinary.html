@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Cloudinary upload </title>
+</head>
+<body>
+
+<h1>This is a Heading</h1>
+<p>This is a paragraph.</p>
+<!-- <form id="myform" method="post" action="https://rc-epay.esewa.com.np/api/epay/main/v2/form">
+
+<div id="fill">
+</div>
+
+<button type="submit">esewa</button>
+
+</form> -->
+
+<input type="file" id="somefile" />
+
+
+<h1>Cloudinary response here</h1>
+<div id="responseDiv">
+
+</div>
+
+<script>
+
+const presignedResponse =
+{
+    "statusCode": 200,
+    "message": "send formData post req to postUrl with given data + file",
+    "data": {
+        "folder": "project/finger",
+        "timestamp": 1732937703,
+        "upload_preset": "ml_default",
+        "signature": "47ad60ba10750d8dd9ce088afa038df0676ba596",
+        "api_key": "527991325131832",
+        "postUrl": "https://api.cloudinary.com/v1_1/dwjnxcjwp/auto/upload"
+    },
+    "success": true
+}
+
+const data = presignedResponse.data
+console.log(data)
+
+document.addEventListener('change', async (e) => {
+    if (e.target.type !== 'file') return;
+
+    // Check if a file is selected
+    if (!e.target.files || e.target.files.length === 0) return;
+
+    const formData = new FormData();
+    formData.append("folder", data.folder);
+    formData.append("timestamp", data.timestamp);
+    formData.append("upload_preset", data.upload_preset);
+    formData.append("signature", data.signature);
+    formData.append("api_key", data.api_key);
+    
+    // Include file or image
+    formData.append("file", e.target.files[0]);
+
+    const postUrl = data.postUrl;
+
+    document.getElementById('responseDiv').innerHTML = "uploading..."
+
+    try {
+        const response = await fetch(postUrl, {
+            method: "POST",
+            body: formData
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        console.log("Upload successful:", result);
+
+        document.getElementById('responseDiv').innerHTML = 
+`<pre>${JSON.stringify(result,null,4)}</pre>`
+
+    } catch (error) {
+        console.error("Upload failed:", error);
+        // Handle upload error (show message to user, etc.)
+    }
+});
+
+    
+
+    
+
+</script>
+
+</body>
+</html>

@@ -9,25 +9,15 @@ const addCourse = asynchHandler(async (req, res) => {
     req.body;
 
   // check if course is already present for the user
-  if (await courseModel.findOne({ title, creator: req.user._id })) {
-    throw new ApiResponse(400, "You already have course with that name");
+  if (
+    await courseModel.findOne({ title: title.trim(), creator: req.user._id })
+  ) {
+    throw new ApiResponse(400, "You already have course with that title");
   }
 
-  // check if organization exists
-  // const org = await organizationModel.findOne({ _id: organization });
-  // if (!org) {
-  //   throw new ApiError(400, "Organization does not exists!!");
-  // }
-
-  // if (!org.admin.equals(req.user._id)) {
-  //   throw new ApiError(403, "You are not the admin of this organization");
-  // }
-
-  // const orgCourses = await courseModel.find({ organization })
-  console.log(req.body);
   try {
     const course = await courseModel.create({
-      title,
+      title: title.trim(),
       subTitle,
       level,
       category,
@@ -53,27 +43,44 @@ const addCourse = asynchHandler(async (req, res) => {
 });
 
 const editCourse = asynchHandler(async (req, res) => {
-  const { name, price, description, thumbnail } = req.body;
+  const { title, subTitle, price, description, thumbnail, category, level } =
+    req.body;
   const _id = req.params._id;
-  const course = await courseModel.findOne({ _id }).populate({
-    path: "creator",
-    select: "username email profilePic",
-  });
+  const course = await courseModel.findOne({ _id }).populate([
+    {
+      path: "creator",
+      select: "username email profilePic",
+    },
+    {
+      path: "category",
+    },
+  ]);
   if (!course) {
     throw new ApiError(400, "that Course does not exists!" + _id);
   }
 
-  if (!name && !price && !description && !thumbnail) {
+  if (
+    !title &&
+    subTitle &&
+    !price &&
+    !description &&
+    !thumbnail &&
+    !category &&
+    !level
+  ) {
     throw new ApiError(
       400,
-      "Either one or many of (name, price, desription, thumbnail) is required."
+      "Either one or many of (title , subTitle, price, desription, thumbnail,level or category) is required."
     );
   }
   if (!course.creator._id.equals(req.user._id)) {
     throw new ApiError(403, "You do not have required permission");
   }
 
-  if (name) course.name = name;
+  if (title) course.title = title;
+  if (subTitle) course.subTitle = subTitle;
+  if (level) course.level = level;
+  if (category) course.category = category;
   if (price) course.price = price;
   if (description) course.description = description;
   if (thumbnail) course.thumbnail = thumbnail;
@@ -106,10 +113,16 @@ const deleteCourse = asynchHandler(async (req, res) => {
 
 const getCourse = asynchHandler(async (req, res) => {
   const _id = req.params._id;
-  const course = await courseModel.findOne({ _id }).populate({
-    path: "creator",
-    select: "username email profilePic",
-  });
+  const course = await courseModel.findOne({ _id }).populate([
+    {
+      path: "creator",
+      select: "username email profilePic",
+    },
+    {
+      path: "category",
+      select: "name",
+    },
+  ]);
   if (!course) {
     throw new ApiError(400, "404 course not found");
   }
@@ -118,33 +131,90 @@ const getCourse = asynchHandler(async (req, res) => {
 
 const getAllCourseByUser = asynchHandler(async (req, res) => {
   const userId = req.params.userId;
+  let { title, level, isPaid, category, page, coursePerPage, latest } =
+    req.query;
 
-  const courses = await courseModel.find({ creator: userId });
+  const courses = await filterCourse({
+    creator: userId,
+    title,
+    level,
+    isPaid,
+    category,
+    page,
+    coursePerPage,
+    latest,
+  });
   res.json(new ApiResponse(200, "all course by user", courses));
 });
 
+const calculateTotalPage = async (query, page, coursePerPage) => {
+  const totalResult = await courseModel.countDocuments(query);
+  const totalPage = Math.ceil(totalResult / coursePerPage);
+  return { totalResult, totalPage, page, coursePerPage };
+};
+
+const filterCourse = async ({
+  creator,
+  title,
+  isPaid,
+  level,
+  category,
+  page,
+  coursePerPage,
+}) => {
+  page = Number(page) || 1;
+  if (page <= 0) page = 1;
+  coursePerPage = Number(coursePerPage) || 2;
+  const query = {
+    $and: [
+      creator ? { creator } : {},
+      title ? { title: { $regex: title, $options: "i" } } : {},
+      level ? { level: { $regex: level, $options: "i" } } : {},
+      category ? { category } : {},
+      isPaid === "false"
+        ? { price: 0 }
+        : isPaid === "true"
+        ? { price: { $gt: 0 } }
+        : {},
+      { visible: true },
+    ].filter((condition) => Object.keys(condition).length > 0),
+  };
+
+  const pageStats = await calculateTotalPage(query, page, coursePerPage);
+
+  const filteredCourse = await courseModel
+    .find(query)
+    .sort({ createdAt: -1 })
+    .skip((page - 1) * coursePerPage)
+    .limit(coursePerPage)
+    .populate([
+      {
+        path: "creator",
+        select: "username email profile",
+      },
+      {
+        path: "category",
+        select: "name",
+      },
+    ]);
+
+  return { filteredCourse, pageStats };
+};
+
 const courseFilterSearch = asynchHandler(async (req, res) => {
-  let { title, isPaid, level, visible } = req.query;
+  let { title, isPaid, level, category, page, coursePerPage, latest } =
+    req.query;
 
   try {
-    const query = {
-      $and: [
-        title ? { title: { $regex: title, $options: "i" } } : {},
-        level ? { level: { $regex: level, $options: "i" } } : {},
-        isPaid === "false"
-          ? { price: 0 }
-          : isPaid === "true"
-          ? { price: { $gt: 0 } }
-          : {},
-        { visible: true },
-      ].filter((condition) => Object.keys(condition).length > 0),
-    };
-
-    console.log(query);
-
-    const courses = await courseModel.find(query);
-
-    console.log(courses);
+    const courses = await filterCourse({
+      title,
+      isPaid,
+      level,
+      category,
+      page,
+      coursePerPage,
+      latest,
+    });
 
     res.json(new ApiResponse(200, "course search filter result", courses));
   } catch (err) {
