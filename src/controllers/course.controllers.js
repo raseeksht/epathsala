@@ -195,7 +195,7 @@ const filterCourse = async (
     .populate([
       {
         path: "creator",
-        select: "username email profile",
+        select: "username fullname email profilePic",
       },
       {
         path: "category",
