@@ -39,6 +39,14 @@ const courseSchema = Schema(
       type: Boolean,
       default: false,
     },
+    averageRating: {
+      type: Number,
+      default: 0,
+    },
+    totalReview: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,

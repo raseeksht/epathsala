@@ -57,7 +57,7 @@ const esewaSuccess = asyncHandler(async (req, res) => {
 
     res.redirect(
       process.env.FRONTEND_URL +
-        `/path/to/success/?success=1?productCode=${d64decoded.product_code}`
+        `/success/?success=1?productCode=${d64decoded.product_code}`
     );
   } catch (error) {
     throw new ApiError(400, error.message);
@@ -65,7 +65,7 @@ const esewaSuccess = asyncHandler(async (req, res) => {
 });
 
 const esewaFailure = asyncHandler(async (req, res) => {
-  res.redirect(process.env.FRONTEND_URL + "/path/to/failure/?success=0");
+  res.redirect(process.env.FRONTEND_URL + "/failure/?success=0");
 });
 
 const khaltiSuccess = asyncHandler(async (req, res) => {

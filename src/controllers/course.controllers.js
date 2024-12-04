@@ -4,16 +4,22 @@ import { ApiError } from "../utils/ApiError.js";
 import { courseModel } from "../models/course.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { videoModel } from "../models/video.model.js";
+import categoryModel from "../models/category.model.js";
 
 const addCourse = asynchHandler(async (req, res) => {
   const { title, subTitle, price, description, thumbnail, level, category } =
     req.body;
 
+  // check if category exits
+  const categoryExists = await categoryModel.findOne({ _id: category });
   // check if course is already present for the user
+  if (!categoryExists) {
+    throw new ApiError(404, "That category does not exists");
+  }
   if (
     await courseModel.findOne({ title: title.trim(), creator: req.user._id })
   ) {
-    throw new ApiResponse(400, "You already have course with that title");
+    throw new ApiError(400, "You already have course with that title");
   }
 
   try {
