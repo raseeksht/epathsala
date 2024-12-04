@@ -47,7 +47,7 @@ const courseSchema = Schema(
 
 courseSchema.pre("deleteOne", async function (next) {
   console.log("Deleting videos related to this course");
-  // const courseId = this.getFilter();
+  const courseId = this.getFilter();
   const videos = await videoModel.find({ course: courseId });
 
   videos.forEach(async (video) => {

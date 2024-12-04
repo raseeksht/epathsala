@@ -101,7 +101,7 @@ const deleteCourse = asynchHandler(async (req, res) => {
   if (!course) {
     throw new ApiError(404, "Course does not exits.");
   }
-  if (!course.creator.equals(req.user._id)) {
+  if (!course.creator._id.equals(req.user._id)) {
     throw new ApiError(403, "You do not have required permission");
   }
 
