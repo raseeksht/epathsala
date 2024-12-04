@@ -203,7 +203,19 @@ const filterCourse = async (
       },
     ]);
 
-  return { filteredCourse, pageStats };
+  const enrichedCourses = await Promise.all(
+    filteredCourse.map(async (course) => {
+      const noOfVideos = await videoModel.countDocuments({
+        course: course._id,
+      });
+      return {
+        ...course.toObject(), // to plain js object
+        noOfVideos,
+      };
+    })
+  );
+
+  return { filteredCourse: enrichedCourses, pageStats };
 };
 
 const courseFilterSearch = asynchHandler(async (req, res) => {

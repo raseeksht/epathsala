@@ -4,7 +4,7 @@ const commentSchena = mongoose.Schema(
   {
     comment_on: {
       type: String,
-      emum: ["video", "post"],
+      emum: ["video", "post", "course"],
       required: true,
     },
     comment_on_ref: {
