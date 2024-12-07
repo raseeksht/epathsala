@@ -65,7 +65,27 @@ const startEnroll = asyncHandler(async (req, res) => {
 
   const txUuid = uuidv4();
 
-  // const userCourseBulkWrite = [];
+  // check if already enrolled;
+  const enrolled = await userCourseEnrollModel
+    .find({ course: { $in: courses }, txnStatus: "COMPLETE" })
+    .populate([
+      {
+        path: "course",
+        select: "title",
+      },
+      {
+        path: "creator",
+        select: "fullname",
+      },
+    ]);
+  const coursesName = enrolled
+    .map((course) => {
+      return course.course.title;
+    })
+    .join(", ");
+  if (enrolled.length > 0) {
+    throw new ApiError(400, `Already Enrolled in ${coursesName}`);
+  }
 
   const userCourseBulkWrite = selectedCourses.map((course) => {
     const userCourse = {

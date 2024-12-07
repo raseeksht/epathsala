@@ -6,6 +6,104 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { videoModel } from "../models/video.model.js";
 import categoryModel from "../models/category.model.js";
 
+function filterByRating(ratingParam) {
+  const availableRatingParam = ["high", "low", "1", "2", "3", "4", "5"];
+  if (!availableRatingParam.includes(ratingParam)) {
+    return false;
+  }
+  if (ratingParam === "high") {
+    return {
+      sort: { rating: -1 },
+    };
+  } else if (ratingParam === "low") {
+    return {
+      sort: { rating: 1 },
+    };
+  } else {
+    return {
+      rating: { $gte: parseInt(ratingParam) },
+    };
+  }
+}
+
+const filterCourse = async (
+  { creator, title, isPaid, level, category, page, coursePerPage, rating },
+  ownCourse = false
+) => {
+  const getRatingSort = (rating) => {
+    return rating == "high" ? -1 : rating == "low" ? 1 : "";
+  };
+
+  page = Number(page) || 1;
+  if (page <= 0) page = 1;
+  let filteredRating = filterByRating(rating);
+
+  let numberedRating;
+  if (parseInt(rating) >= 1 && parseInt(rating) <= 5) {
+    numberedRating = parseInt(rating);
+  }
+
+  coursePerPage = Number(coursePerPage) || 2;
+  const query = {
+    $and: [
+      creator ? { creator } : {},
+      title ? { title: { $regex: title, $options: "i" } } : {},
+      level ? { level: { $regex: level, $options: "i" } } : {},
+      category ? { category } : {},
+      isPaid === "false"
+        ? { price: 0 }
+        : isPaid === "true"
+        ? { price: { $gt: 0 } }
+        : {},
+      ownCourse ? {} : { visible: true },
+      numberedRating ? filteredRating : {},
+    ].filter((condition) => Object.keys(condition).length > 0),
+  };
+
+  const sortFilter = {
+    averageRating: getRatingSort(rating),
+    createdAt: -1,
+  };
+
+  Object.keys(sortFilter).map((key) => {
+    if (sortFilter[key] == "") {
+      delete sortFilter[key];
+    }
+  });
+
+  const pageStats = await calculateTotalPage(query, page, coursePerPage);
+
+  const filteredCourse = await courseModel
+    .find(query)
+    .sort(sortFilter)
+    .skip((page - 1) * coursePerPage)
+    .limit(coursePerPage)
+    .populate([
+      {
+        path: "creator",
+        select: "username fullname email profilePic",
+      },
+      {
+        path: "category",
+        select: "name",
+      },
+    ]);
+
+  const enrichedCourses = await Promise.all(
+    filteredCourse.map(async (course) => {
+      const noOfVideos = await videoModel.countDocuments({
+        course: course._id,
+      });
+      return {
+        ...course.toObject(), // to plain js object
+        noOfVideos,
+      };
+    })
+  );
+
+  return { filteredCourse: enrichedCourses, pageStats };
+};
+
 const addCourse = asynchHandler(async (req, res) => {
   const { title, subTitle, price, description, thumbnail, level, category } =
     req.body;
@@ -147,7 +245,7 @@ const getCourse = asynchHandler(async (req, res) => {
 
 const getAllCourseByUser = asynchHandler(async (req, res) => {
   const userId = req.params.userId;
-  let { title, level, isPaid, category, page, coursePerPage, latest } =
+  let { title, level, isPaid, category, page, coursePerPage, latest, rating } =
     req.query;
 
   const courses = await filterCourse({
@@ -159,6 +257,7 @@ const getAllCourseByUser = asynchHandler(async (req, res) => {
     page,
     coursePerPage,
     latest,
+    rating,
   });
   res.json(new ApiResponse(200, "all course by user", courses));
 });
@@ -167,61 +266,6 @@ const calculateTotalPage = async (query, page, coursePerPage) => {
   const totalResult = await courseModel.countDocuments(query);
   const totalPage = Math.ceil(totalResult / coursePerPage);
   return { totalResult, totalPage, page, coursePerPage };
-};
-
-const filterCourse = async (
-  { creator, title, isPaid, level, category, page, coursePerPage },
-  ownCourse = false
-) => {
-  page = Number(page) || 1;
-  if (page <= 0) page = 1;
-  coursePerPage = Number(coursePerPage) || 2;
-  const query = {
-    $and: [
-      creator ? { creator } : {},
-      title ? { title: { $regex: title, $options: "i" } } : {},
-      level ? { level: { $regex: level, $options: "i" } } : {},
-      category ? { category } : {},
-      isPaid === "false"
-        ? { price: 0 }
-        : isPaid === "true"
-        ? { price: { $gt: 0 } }
-        : {},
-      ownCourse ? {} : { visible: true },
-    ].filter((condition) => Object.keys(condition).length > 0),
-  };
-
-  const pageStats = await calculateTotalPage(query, page, coursePerPage);
-
-  const filteredCourse = await courseModel
-    .find(query)
-    .sort({ createdAt: -1 })
-    .skip((page - 1) * coursePerPage)
-    .limit(coursePerPage)
-    .populate([
-      {
-        path: "creator",
-        select: "username fullname email profilePic",
-      },
-      {
-        path: "category",
-        select: "name",
-      },
-    ]);
-
-  const enrichedCourses = await Promise.all(
-    filteredCourse.map(async (course) => {
-      const noOfVideos = await videoModel.countDocuments({
-        course: course._id,
-      });
-      return {
-        ...course.toObject(), // to plain js object
-        noOfVideos,
-      };
-    })
-  );
-
-  return { filteredCourse: enrichedCourses, pageStats };
 };
 
 const courseFilterSearch = asynchHandler(async (req, res) => {
@@ -247,8 +291,17 @@ const courseFilterSearch = asynchHandler(async (req, res) => {
 });
 
 const getMyCourse = asynchHandler(async (req, res) => {
-  const { page, coursePerPage, name, isPaid, category, latest, title, level } =
-    req.query;
+  const {
+    page,
+    coursePerPage,
+    name,
+    isPaid,
+    category,
+    latest,
+    title,
+    level,
+    rating,
+  } = req.query;
 
   const myCourse = await filterCourse(
     {
@@ -261,6 +314,7 @@ const getMyCourse = asynchHandler(async (req, res) => {
       title,
       level,
       creator: req.user._id,
+      rating,
     },
     true
   );

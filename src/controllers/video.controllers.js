@@ -11,25 +11,21 @@ import { ApiError } from "../utils/ApiError.js";
 const handleVideoUpload = asyncHandler(async (req, res) => {
   const { title, description, course } = req.body;
   const vId = uuidv4();
-  const videoPath = req.file.path;
-  console.log(course);
+  const videoPath = req.file?.path;
+  if (!videoPath) {
+    throw new ApiError(400, "Video Missing");
+  }
   const selectedCourse = await courseModel.findOne({ _id: course });
-  console.log(selectedCourse);
   if (!selectedCourse) {
     throw new ApiError(404, "Course Does not Exists");
   }
 
-  // console.log(req.user._id);
-  // console.log(selectedCourse.creator);
-  // console.log()
   if (!selectedCourse.creator.equals(req.user._id)) {
     throw new ApiError(403, "Cannot upload to this course.");
   }
 
-  // return res.send(videoPath);
   const outputPath = `uploads/videos/${vId}`;
   const hlsPath = `${outputPath}/master.m3u8`;
-  console.log(hlsPath);
 
   const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -37,7 +33,6 @@ const handleVideoUpload = asyncHandler(async (req, res) => {
     videoPath: path.join(__dirname, "..", "..", videoPath),
     outputPath: outputPath,
   });
-  //   console.log(job);
 
   const videoUrl = `${process.env.BACKEND_URL}/${outputPath}/master.m3u8`;
 
