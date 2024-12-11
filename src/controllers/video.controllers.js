@@ -86,4 +86,27 @@ const getVideo = asyncHandler(async (req, res) => {
   res.json(new ApiResponse(200, "video", videos));
 });
 
-export { handleVideoUpload, checkProgress, getVideo };
+
+const deleteVideo = asyncHandler(async (req, res) => {
+  const videoId = req.params.videoId;
+  const video = await videoModel.findOne({
+    _id: videoId,
+    uploader: req.user._id
+  });
+
+  if (!video)
+    throw new ApiError(404, 'VIdeo Does not exists or already delted');
+
+  if (!video.uploader.equals(req.user._id))
+    throw new ApiError(403, 'Not your video to delete!!!');
+
+  await video.delete();
+
+  fs.rm(
+    `uploads/videos/${video.uuid}`,
+    { recursive: true, force: true },
+    (err) => {}
+  );
+});
+
+export { handleVideoUpload, checkProgress, getVideo, deleteVideo };

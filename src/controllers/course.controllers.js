@@ -5,6 +5,7 @@ import { courseModel } from "../models/course.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { videoModel } from "../models/video.model.js";
 import categoryModel from "../models/category.model.js";
+import { getCombinedVector } from '../utils/utils.functions.js';
 
 function filterByRating(ratingParam) {
   const availableRatingParam = ["high", "low", "1", "2", "3", "4", "5"];
@@ -121,6 +122,7 @@ const addCourse = asynchHandler(async (req, res) => {
   }
 
   try {
+    const precomputedVector = getCombinedVector(title, subTitle, description);
     const course = await courseModel.create({
       title: title.trim(),
       subTitle,
@@ -130,6 +132,7 @@ const addCourse = asynchHandler(async (req, res) => {
       description,
       thumbnail,
       creator: req.user._id,
+      textVectors: precomputedVector
     });
 
     if (course) {
@@ -191,6 +194,14 @@ const editCourse = asynchHandler(async (req, res) => {
   if (description) course.description = description;
   if (thumbnail) course.thumbnail = thumbnail;
 
+  if (title || subTitle || description) {
+    course.textVectors = getCombinedVector(
+      course.title,
+      course.subTitle,
+      course.description
+    );
+  }
+  
   await course.save();
 
   res.json(new ApiResponse(200, "Edit Successfully", course));

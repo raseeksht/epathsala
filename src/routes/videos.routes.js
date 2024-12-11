@@ -7,7 +7,8 @@ import {
   handleVideoUpload,
   checkProgress,
   getVideo,
-} from "../controllers/video.controllers.js";
+  deleteVideo
+} from '../controllers/video.controllers.js';
 import path from "path";
 import { createDirIfNotExists } from "../utils/utils.js";
 
@@ -49,5 +50,6 @@ router.get(
 );
 
 router.get("/progress", validateUser("teacher"), checkProgress);
+router.delete('/:videoId', validateUser('teacher'), deleteVideo);
 
 export default router;

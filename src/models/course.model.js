@@ -47,6 +47,9 @@ const courseSchema = Schema(
       type: Number,
       default: 0,
     },
+    textVectors: {
+      type: Array,
+    },
   },
   {
     timestamps: true,
