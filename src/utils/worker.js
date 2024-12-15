@@ -1,10 +1,4 @@
 import Queue from "bull";
-// import {
-//   calculateDownScaleResolutions,
-//   createDirIfNotExists,
-//   createMasterM3u8,
-//   makeSegments,
-// } from "./utils.js";
 import "dotenv/config";
 import {
   calculateDownScaleResolutions,
@@ -56,9 +50,4 @@ videoQueue.process(async function (job) {
   });
 });
 
-const main = async () => {
-  const job = await videoQueue.getJob("14");
-  console.log(job);
-};
-// main();
 export { videoQueue };

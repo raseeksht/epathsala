@@ -115,6 +115,19 @@ function normalizeValue(value, min, max) {
   return (value - min) / (max - min);
 }
 
+const textToVector = (text1, text2) => {
+  const tokenizer = new natural.WordTokenizer();
+  const tokens1 = tokenizer.tokenize(text1.toLowerCase());
+  const tokens2 = tokenizer.tokenize(text2.toLowerCase());
+  const combinedTokens = Array.from(new Set([...tokens1, ...tokens2]));
+
+  const vector1 = combinedTokens.map(token => tokens1.includes(token) ? 1 : 0);
+  const vector2 = combinedTokens.map(token => tokens2.includes(token) ? 1 : 0);
+
+  return [vector1, vector2];
+}
+
+
 export {
   generatePresignedUrl,
   generateHmacSignature,
@@ -122,4 +135,6 @@ export {
   decodeAuthHeaderToken,
   normalizeValue,
   getCombinedVector,
+  calculateCosineSimilarity,
+  textToVector
 };

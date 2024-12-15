@@ -5,7 +5,8 @@ import { courseModel } from "../models/course.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { videoModel } from "../models/video.model.js";
 import categoryModel from "../models/category.model.js";
-import { getCombinedVector } from '../utils/utils.functions.js';
+import { calculateCosineSimilarity, getCombinedVector, normalizeValue, textToVector } from '../utils/utils.functions.js';
+import { userCourseEnrollModel } from '../models/userCourseEnroll.model.js';
 
 function filterByRating(ratingParam) {
   const availableRatingParam = ["high", "low", "1", "2", "3", "4", "5"];
@@ -75,7 +76,7 @@ const filterCourse = async (
   const pageStats = await calculateTotalPage(query, page, coursePerPage);
 
   const filteredCourse = await courseModel
-    .find(query)
+    .find(query,{textVectors:0})
     .sort(sortFilter)
     .skip((page - 1) * coursePerPage)
     .limit(coursePerPage)
@@ -143,7 +144,6 @@ const addCourse = asynchHandler(async (req, res) => {
       throw new ApiError(500, "failed to add the course");
     }
   } catch (err) {
-    console.log(err);
     if (err.code == 11000) {
       throw new ApiError(400, `Duplicate '${Object.keys(err.keyValue)[0]}'`);
     }
@@ -333,6 +333,63 @@ const getMyCourse = asynchHandler(async (req, res) => {
   res.json(new ApiResponse(200, "take your course", myCourse));
 });
 
+const getSuggestedCourse = asynchHandler(async (req, res) => {
+  const userCourses = await userCourseEnrollModel.find({ user: req.user._id }).sort({createdAt:1}).populate("course");
+
+  if (userCourses.length == 0){
+    // if user has 0 courses enrolled just suggest the highest rated course.
+    const myCourse = await filterCourse({rating:"high"});
+    return res.json(new ApiResponse(200,"Suggested Course",myCourse));
+  }else{
+    const latestCourse = userCourses[0];
+    const courses = await courseModel.find({_id:{$ne:latestCourse.course}},{textVectors:0});
+    // const courses = await courseModel.find().where('_id').ne(latestCourse.course);
+
+    const allPrices = courses.map(obj => obj.price).concat(latestCourse.course.price);
+    const minPrice = Math.min(...allPrices);
+    const maxPrice = Math.max(...allPrices);
+
+    const similarities = courses.map(course=> {
+      const text1 = latestCourse.course.title
+      const text2 = course.title
+      const [v1,v2] = textToVector(text1,text2)
+
+      const textSimilarity = calculateCosineSimilarity(v1,v2);
+
+      const categorySimilarity = latestCourse.course.category == course.category ? 1 : 0;
+      const levelSimilarity = latestCourse.course.level === course.level ? 1 : 0;
+
+      const normPriceOfLatestCourse = normalizeValue(latestCourse.course.price, minPrice, maxPrice);
+      const normPriceOfCourse = normalizeValue(course.price, minPrice, maxPrice);
+      const priceDifference = 1 - Math.abs(normPriceOfLatestCourse - normPriceOfCourse);
+
+      const weights = {
+        text: 0.5,
+        level: 0.1,
+        category: 0.2,
+        price: 0.2,
+      };
+
+      const overallSimilarity =
+        textSimilarity * weights.text +
+        levelSimilarity * weights.level +
+        categorySimilarity * weights.category +
+        priceDifference * weights.price;
+      
+        return {
+          ...course._doc,
+          similarity: overallSimilarity,
+        };
+
+    })
+    
+
+
+    res.json(new ApiResponse(200,"okay",similarities))
+
+  }
+});
+
 export {
   addCourse,
   editCourse,
@@ -341,4 +398,5 @@ export {
   getAllCourseByUser,
   courseFilterSearch,
   getMyCourse,
+  getSuggestedCourse
 };

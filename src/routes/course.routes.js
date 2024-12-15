@@ -8,7 +8,8 @@ import {
   getAllCourseByUser,
   getCourse,
   getMyCourse,
-} from "../controllers/course.controllers.js";
+  getSuggestedCourse
+} from '../controllers/course.controllers.js';
 
 import { fieldValidator } from "../middlewares/fieldValidator.middlewares.js";
 import enrollRoute from "./enroll.routes.js";
@@ -21,6 +22,9 @@ router.get("/search", courseFilterSearch);
 router.get("/get-all-couse-by-user/:userId", getAllCourseByUser);
 
 router.get("/mycourses", validateUser("teacher"), getMyCourse);
+
+// cosine similarity
+router.get("/recommended",validateUser('any'),getSuggestedCourse);
 
 router.post(
   "/",
