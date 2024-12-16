@@ -36,7 +36,9 @@ const getEnrolledCourse = asyncHandler(async (req, res) => {
   const enrolledCourses = await userCourseEnrollModel.find({
     // organization: organizationId,
     user: req.user._id,
-  });
+  }).populate([{
+    path:"course"
+  }]);
 
   return res.json(new ApiResponse(200, `all course enrolled`, enrolledCourses));
 });

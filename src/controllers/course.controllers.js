@@ -293,6 +293,14 @@ const courseFilterSearch = asynchHandler(async (req, res) => {
       coursePerPage,
       latest,
     });
+    if (req.user?._id){
+      const boughtCourses = await userCourseEnrollModel.find({user:req.user_id},{_id:1})
+      // if (boughtCourses.length > 0){
+      //   const checkedCourse = courses.map(course=>{
+      //     if (course.id)
+      //   })
+      // }
+    }
 
     res.json(new ApiResponse(200, "course search filter result", courses));
   } catch (err) {

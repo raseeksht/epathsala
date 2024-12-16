@@ -14,7 +14,6 @@ const updateOrder = async (txUuid, status) => {
       $set: { txnStatus: status },
     }
   );
-  console.log(set);
 };
 
 const esewaSuccess = asyncHandler(async (req, res) => {
@@ -25,10 +24,12 @@ const esewaSuccess = asyncHandler(async (req, res) => {
   try {
     const d64decoded = JSON.parse(atob(data));
 
-    const message = d64decoded.signed_field_names
+
+    let message = d64decoded.signed_field_names
       .split(",")
-      .map((field) => `${field}=${d64decoded[field]}`)
-      .join(",");
+      .map((field) => {
+        return (field == "total_amount") ? `${field}=${d64decoded[field].replace(",","")}` : `${field}=${d64decoded[field]}`
+        }).join(",")
     const calcSignature = generateHmacSignature(message);
 
     // compare computed signature with the singature sent by esewa signed by our key
@@ -43,10 +44,11 @@ const esewaSuccess = asyncHandler(async (req, res) => {
       txnId: d64decoded.transaction_uuid,
     });
 
+
     const txn = await txnModel.create({
       transactionCode: d64decoded.transaction_code,
       status: d64decoded.status,
-      totalAmount: d64decoded.total_amount,
+      totalAmount: d64decoded.total_amount.replace(",",""),
       transactionUuid: d64decoded.transaction_uuid,
       productCode: d64decoded.product_code,
       signature: d64decoded.signature,
@@ -81,7 +83,6 @@ const khaltiSuccess = asyncHandler(async (req, res) => {
     purchase_order_name,
     transaction_id,
   } = req.query;
-  console.log(req.query);
   const confirmationUrl = process.env.KHALTI_CONFIRMATION_URL;
   const config = {
     headers: {

@@ -27,4 +27,26 @@ const validateUser = (role = "any") => (req, res, next) => {
     }
 }
 
+const optionalValidation =  (req, res, next) => {
+    const auth = req.headers?.authorization
+    if (!auth || !auth.startsWith("Bearer ")) {
+        req.user = null;
+        next();
+    }
+
+    const token = auth.split(" ")[1]
+
+    try {
+        jwt.verify(token, process.env.JWT_ACCESS_SECRET);
+        const decodedToken = jwt.decode(token, process.env.JWT_ACCESS_SECRET);
+
+        req.user = decodedToken
+        next()
+    } catch (err) {
+        throw new ApiError(401, err.message || "Invalid or expired token");
+    }
+}
+
 export default validateUser
+
+export {optionalValidation}

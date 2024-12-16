@@ -1,5 +1,5 @@
 import { Router } from "express";
-import validateUser from "../middlewares/userAuth.middlewares.js";
+import validateUser, { optionalValidation } from "../middlewares/userAuth.middlewares.js";
 import {
   addCourse,
   courseFilterSearch,
@@ -18,7 +18,7 @@ const router = Router();
 
 router.use("/enroll", enrollRoute);
 
-router.get("/search", courseFilterSearch);
+router.get("/search",optionalValidation, courseFilterSearch);
 router.get("/get-all-couse-by-user/:userId", getAllCourseByUser);
 
 router.get("/mycourses", validateUser("teacher"), getMyCourse);
