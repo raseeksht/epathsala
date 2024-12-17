@@ -13,7 +13,7 @@ const addCategory = asyncHandler(async (req, res) => {
     res.status(201).json(new ApiResponse(201, "New Category Added", category));
   } catch (err) {
     if (err.code == 11000) {
-      throw new ApiError("Duplicate category name");
+      throw new ApiError(400,"Duplicate category name");
     }
     throw new ApiError(500, err.getMessage());
   }

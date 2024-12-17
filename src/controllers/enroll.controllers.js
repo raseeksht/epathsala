@@ -34,10 +34,20 @@ const checkCourseEnrollment = asyncHandler(async (req, res) => {
 
 const getEnrolledCourse = asyncHandler(async (req, res) => {
   const enrolledCourses = await userCourseEnrollModel.find({
-    // organization: organizationId,
     user: req.user._id,
   }).populate([{
-    path:"course"
+    path:"course",
+    select:"-textVectors",
+    populate: [
+      {
+        path:"category",
+        "select":"name"
+      },
+      {
+        path:"creator",
+        select:"username email fullname profilePic"
+      }
+    ]
   }]);
 
   return res.json(new ApiResponse(200, `all course enrolled`, enrolledCourses));
@@ -69,7 +79,7 @@ const startEnroll = asyncHandler(async (req, res) => {
 
   // check if already enrolled;
   const enrolled = await userCourseEnrollModel
-    .find({ course: { $in: courses }, txnStatus: "COMPLETE" })
+    .find({ course: { $in: courses }, txnStatus: "COMPLETE",user:req.user._id })
     .populate([
       {
         path: "course",
