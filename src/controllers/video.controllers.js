@@ -7,6 +7,8 @@ import { videoModel } from "../models/video.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { courseModel } from "../models/course.model.js";
 import { ApiError } from "../utils/ApiError.js";
+import likeModel from "../models/like.model.js";
+import mongoose from "mongoose";
 
 const handleVideoUpload = asyncHandler(async (req, res) => {
   const { title, description, course } = req.body;
@@ -82,8 +84,49 @@ const checkProgress = asyncHandler(async (req, res) => {
 
 const getVideo = asyncHandler(async (req, res) => {
   const courseId = req.query.courseId;
-  const videos = await videoModel.find({ course: courseId });
-  res.json(new ApiResponse(200, "video", videos));
+  const course = await courseModel.findOne({_id: courseId},{textVectors: 0 }).populate([
+    {
+      path: "category",
+      select: "name",
+    },
+    {
+      path: "creator",
+      select: "username fullname email profilePic"
+    }
+  ]);
+
+  // let videos = await videoModel.find({ course: courseId }).lean();
+
+  // const videoIds = videos.map(video=> video._id);
+  // let likes = await likeModel.find({liked_by: req.user._id, like_on_ref: {$in: videoIds }},{like_on_ref: 1 });
+  // likes = likes.map(like=>like.like_on_ref.toString())
+
+  // videos = videos.map(video=> {
+  //   return {...video, liked: likes.includes(video._id.toString()) }
+  // });
+
+  const videos = await videoModel.aggregate([
+    {$match: { course: new mongoose.Types.ObjectId(courseId) } },
+    {
+      $lookup: {
+        from: 'likes', // Collection name for likes
+        localField: '_id', // Field in videoModel
+        foreignField: 'like_on_ref', // Field in likeModel
+        as: 'liked_temp', // Name of the resulting array
+      },
+    },
+    {
+      $addFields: {
+        liked: {
+          $in: [new mongoose.Types.ObjectId(req.user._id), { $map: { input: '$liked_temp', as: 'like', in: '$$like.liked_by' } }],
+        },
+      },
+    },
+    { $project: { liked_temp: 0 } }, // Exclude the `likes` array from the result
+  ]);
+
+  
+  res.json(new ApiResponse(200, "video", {course, videos}));
 });
 
 

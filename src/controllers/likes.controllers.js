@@ -75,10 +75,9 @@ const like_dislike_post_handler = asyncHandler(async (req, res) => {
 });
 
 const like_dislike_video_handler = asyncHandler(async (req, res) => {
-  const videoId = req.params.commentId;
+  const videoId = req.params.videoId;
   const { action } = req.body;
-  const result = await like_dislike_handler(action, videoId, "video", req.user);
-  console.log(result);
+  const result = await like_dislike_handler(action, videoId, "Video", req.user);
   res.json(result);
   res.status(result.status).json(result.response);
 });

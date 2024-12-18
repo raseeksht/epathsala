@@ -9,7 +9,7 @@ const likeSchema = mongoose.Schema(
     },
     like_on: {
       type: String,
-      enum: ["post", "video"],
+      enum: ["Post", "Video"],
       required: true,
     },
     like_on_ref: {
