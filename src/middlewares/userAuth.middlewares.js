@@ -31,7 +31,7 @@ const optionalValidation =  (req, res, next) => {
     const auth = req.headers?.authorization
     if (!auth || !auth.startsWith("Bearer ")) {
         req.user = null;
-        next();
+        return next();
     }
 
     const token = auth.split(" ")[1]

@@ -89,7 +89,7 @@ const filterCourse = async (
         path: "category",
         select: "name",
       },
-    ]);
+    ]).lean();
 
   const enrichedCourses = await Promise.all(
     filteredCourse.map(async (course) => {
@@ -97,7 +97,7 @@ const filterCourse = async (
         course: course._id,
       });
       return {
-        ...course.toObject(), // to plain js object
+        ...course, // to plain js object
         noOfVideos,
       };
     })
@@ -293,18 +293,25 @@ const courseFilterSearch = asynchHandler(async (req, res) => {
       coursePerPage,
       latest,
     });
+    
+    // for logged in user, show bought: true if the courses is already purchased by the user
     if (req.user?._id){
-      const boughtCourses = await userCourseEnrollModel.find({user:req.user_id},{_id:1})
-      // if (boughtCourses.length > 0){
-      //   const checkedCourse = courses.map(course=>{
-      //     if (course.id)
-      //   })
-      // }
+      let boughtCourses = await userCourseEnrollModel.find({user:req.user._id},{course:1}).lean();
+      boughtCourses = boughtCourses.map(bc=>bc.course.toString())
+
+      if (boughtCourses.length > 0){
+        const checkedCourse = courses.filteredCourse.map(course=>{
+          if (boughtCourses.includes(course._id.toString())){
+            return {...course, bought:true}
+          }
+          return course
+        })
+        courses.filteredCourse = checkedCourse
+      }
     }
 
     res.json(new ApiResponse(200, "course search filter result", courses));
   } catch (err) {
-    console.log(err.message);
     throw new ApiError(400, "search failed " + err.message);
   }
 });
