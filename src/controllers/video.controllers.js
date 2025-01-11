@@ -9,6 +9,7 @@ import { courseModel } from "../models/course.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import likeModel from "../models/like.model.js";
 import mongoose from "mongoose";
+import fs from 'fs';
 
 const handleVideoUpload = asyncHandler(async (req, res) => {
   const { title, description, course } = req.body;
@@ -134,22 +135,25 @@ const deleteVideo = asyncHandler(async (req, res) => {
   const videoId = req.params.videoId;
   const video = await videoModel.findOne({
     _id: videoId,
-    uploader: req.user._id
-  });
+  }).populate("course");
+
+  // return res.json({video})
 
   if (!video)
     throw new ApiError(404, 'VIdeo Does not exists or already delted');
 
-  if (!video.uploader.equals(req.user._id))
+  if (!video.course.creator.equals(req.user._id))
     throw new ApiError(403, 'Not your video to delete!!!');
 
-  await video.delete();
+  await videoModel.deleteOne({_id:videoId});
 
   fs.rm(
     `uploads/videos/${video.uuid}`,
     { recursive: true, force: true },
     (err) => {}
   );
+
+  res.json(new ApiResponse(200,"VIdeo deleted"))
 });
 
 export { handleVideoUpload, checkProgress, getVideo, deleteVideo };
