@@ -55,7 +55,7 @@ const getGroupedCommentAndReplies = async (
       parent_comment_ref,
       comment_on_ref,
     })
-    .populate("commentor", "username profilePic")
+    .populate("commentor", "username profilePic fullname")
     .select("-comment_on_ref");
   for (const comment of mainComments) {
     const commentObj = {
