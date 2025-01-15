@@ -230,7 +230,6 @@ const deleteCourse = asynchHandler(async (req, res) => {
 
 const getCourse = asynchHandler(async (req, res) => {
   const _id = req.params._id;
-  let unauthorized;
   const course = await courseModel
     .findOne({ _id },{textVectors:0})
     .populate([
@@ -246,29 +245,23 @@ const getCourse = asynchHandler(async (req, res) => {
     .lean();
     if (!course) throw new ApiError(404,"Course does not exists");
 
-    if (!req.user?._id){
-      return res.json(new ApiResponse(200,"unauthorized view. Take just the course info",course))
-    }
-
-
-
     // check if the requestor is the creator
-    if (!course.creator._id.equals(req.user._id)){
-      // if not creator himself, check if the user is in the enrolled list
-      // if not send just the course info
-      const chkUserEnroll = await userCourseEnrollModel.findOne({_course :_id, user: req.user._id})
-      if (!chkUserEnroll){
-        return res.json(new ApiResponse(200,"unauthorized view. Take just the course info",course))
+    const isCreator = course.creator._id.equals(req.user?._id)
 
-      }
+    const isEnrolled = await userCourseEnrollModel.findOne({_course :_id, user: req.user?._id})
+
+    let videoDetails = {manifestFile: 0,uuid:0}; // for unauth users
+    if (isCreator || isEnrolled){
+      // either creator or enrolled user
+      videoDetails = {}
     }
 
+    const videos = await videoModel.find({ course: _id },videoDetails).lean();
 
-  const videos = await videoModel.find({ course: _id }).lean();
+    const combined = { ...course, lectures: [...videos] };
 
-  const combined = { ...course, lectures: [...videos] };
-
-  course.lectures = videos;
+    course.lectures = videos;
+  
   res.json(new ApiResponse(200, "course fetched", combined));
 });
 
