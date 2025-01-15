@@ -41,7 +41,7 @@ router.post(
   addCourse
 );
 
-router.get("/:_id", getCourse);
+router.get("/:_id",optionalValidation, getCourse);
 
 router.put("/:_id", validateUser("teacher"), editCourse);
 
