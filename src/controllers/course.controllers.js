@@ -8,6 +8,7 @@ import categoryModel from "../models/category.model.js";
 import { calculateCosineSimilarity, getCombinedVector, normalizeValue, textToVector } from '../utils/utils.functions.js';
 import { userCourseEnrollModel } from '../models/userCourseEnroll.model.js';
 import mongoose from "mongoose";
+import { ratingModel } from "../models/rating.model.js";
 
 function filterByRating(ratingParam) {
   const availableRatingParam = ["high", "low", "1", "2", "3", "4", "5"];
@@ -232,9 +233,6 @@ const deleteCourse = asynchHandler(async (req, res) => {
 const getCourse = asynchHandler(async (req, res) => {
   const _id = req.params._id;
 
-  // const a = await userCourseEnrollModel.find({course:_id,user:req.user?._id})
-  // return res.json({a})
-
   const course = await courseModel
     .findOne({ _id },{textVectors:0})
     .populate([
@@ -260,9 +258,12 @@ const getCourse = asynchHandler(async (req, res) => {
       videoDetails = {}
     }
 
+    const myRating = await ratingModel.findOne({course:_id,rated_by:req.user?._id});
+
+
     const videos = await videoModel.find({ course: _id },videoDetails).lean();
 
-    const combined = { ...course,bought:!!isEnrolled, lectures: [...videos] };
+    const combined = { ...course,bought:!!isEnrolled, myRating: myRating?.rating, lectures: [...videos] };
 
     course.lectures = videos;
   
