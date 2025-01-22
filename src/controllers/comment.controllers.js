@@ -56,7 +56,8 @@ const getGroupedCommentAndReplies = async (
       comment_on_ref,
     })
     .populate("commentor", "username profilePic fullname")
-    .select("-comment_on_ref");
+    .select("-comment_on_ref")
+    .sort({createdAt:-1});
   for (const comment of mainComments) {
     const commentObj = {
       ...comment._doc,
