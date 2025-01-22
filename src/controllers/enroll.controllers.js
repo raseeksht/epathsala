@@ -35,6 +35,7 @@ const checkCourseEnrollment = asyncHandler(async (req, res) => {
 const getEnrolledCourse = asyncHandler(async (req, res) => {
   const enrolledCourses = await userCourseEnrollModel.find({
     user: req.user._id,
+    txnStatus:'COMPLETE'
   }).populate([{
     path:"course",
     select:"-textVectors",
