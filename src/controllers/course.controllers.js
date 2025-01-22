@@ -312,7 +312,7 @@ const courseFilterSearch = asynchHandler(async (req, res) => {
     
     // for logged in user, show bought: true if the courses is already purchased by the user
     if (req.user?._id){
-      let boughtCourses = await userCourseEnrollModel.find({user:req.user._id},{course:1}).lean();
+      let boughtCourses = await userCourseEnrollModel.find({user:req.user._id, txnStatus:'COMPLETE'},{course:1}).lean();
       boughtCourses = boughtCourses.map(bc=>bc.course.toString())
 
       if (boughtCourses.length > 0){
