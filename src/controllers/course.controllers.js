@@ -367,13 +367,15 @@ const getMyCourse = asynchHandler(async (req, res) => {
 
 const getSuggestedCourse = asynchHandler(async (req, res) => {
   const userCourses = await userCourseEnrollModel.find({ user: req.user._id }).sort({createdAt:1}).populate("course");
+  const courseIds = userCourses.map(courseEnrollment => courseEnrollment.course._id);
+
   if (userCourses.length == 0){
     // if user has 0 courses enrolled just suggest the highest rated course.
     // const myCourse = await filterCourse({rating:"high"});
     return res.json(new ApiResponse(200,"Suggested Course",[]));
   }else{
     const latestCourse = userCourses[0];
-    const courses = await courseModel.find({_id:{$ne:latestCourse.course},visible:true},{textVectors:0});
+    const courses = await courseModel.find({_id:{$ne:latestCourse.course},_id: { $nin: courseIds } ,visible:true},{textVectors:0});
     // const courses = await courseModel.find().where('_id').ne(latestCourse.course);
 
     const allPrices = courses.map(obj => obj.price).concat(latestCourse.course.price);

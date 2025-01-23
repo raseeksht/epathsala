@@ -65,7 +65,6 @@ const loginUser = asyncHandler(async (req, res) => {
     }
 
     const token = await user.generateAccessToken(payload);
-    console.log(token);
     res.json(new ApiResponse(200, message, { ...reqFields, token }));
   } else {
     throw new ApiError(403, "email or password error");
