@@ -31,7 +31,7 @@ function filterByRating(ratingParam) {
 }
 
 const filterCourse = async (
-  { creator, title, isPaid, level, category, page, coursePerPage, rating },
+  { creator, title, isPaid, level, category, page, coursePerPage, latest,rating },
   ownCourse = false
 ) => {
   const getRatingSort = (rating) => {
@@ -296,7 +296,7 @@ const calculateTotalPage = async (query, page, coursePerPage) => {
 };
 
 const courseFilterSearch = asynchHandler(async (req, res) => {
-  let { title, isPaid, level, category, page, coursePerPage, latest } =
+  let { title, isPaid, level, category, page, coursePerPage, latest, rating } =
     req.query;
 
   try {
@@ -308,6 +308,7 @@ const courseFilterSearch = asynchHandler(async (req, res) => {
       page,
       coursePerPage,
       latest,
+      rating
     });
     
     // for logged in user, show bought: true if the courses is already purchased by the user
