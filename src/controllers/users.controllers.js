@@ -114,4 +114,9 @@ const editDetails = asyncHandler(async (req, res) => {
   }
 });
 
-export { createUser, loginUser, editDetails };
+const myDetails = asyncHandler(async (req,res)=>{
+  const details = await userModel.findOne({_id:req.user._id},{password:0});
+  res.json(new ApiResponse(200,"user detail",details));
+})
+
+export { createUser, loginUser, editDetails, myDetails };

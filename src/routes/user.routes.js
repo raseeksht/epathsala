@@ -5,10 +5,13 @@ import {
   createUser,
   editDetails,
   loginUser,
+  myDetails,
 } from "../controllers/users.controllers.js";
 import twoFARoutes from "./twofa.routes.js";
 
 const router = Router();
+
+router.get("/",validateUser('any'), myDetails);
 
 router.post(
   "/register",
