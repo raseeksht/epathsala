@@ -366,7 +366,12 @@ const getMyCourse = asynchHandler(async (req, res) => {
 });
 
 const getSuggestedCourse = asynchHandler(async (req, res) => {
-  const userCourses = await userCourseEnrollModel.find({ user: req.user._id }).sort({createdAt:1}).populate("course");
+  const limit = req.query.limit;
+  const userCourses = await userCourseEnrollModel
+    .find({ user: req.user._id })
+    .sort({ createdAt: 1 })
+    .limit(3)
+    .populate('course');
   const courseIds = userCourses.map(courseEnrollment => courseEnrollment.course._id);
 
   if (userCourses.length == 0){

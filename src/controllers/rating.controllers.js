@@ -2,12 +2,21 @@ import asyncHandler from "express-async-handler";
 import { ratingModel } from "../models/rating.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { courseModel } from "../models/course.model.js";
+import { ApiError } from '../utils/ApiError.js';
 
 const addRating = asyncHandler(async (req, res) => {
   const { star, course } = req.body;
+  // check if the user has enrolled in this course.
+  const checkEnroll = await userCourseEnrollModel.findOne({
+    course,
+    user: req.user._id
+  });
+  if (!checkEnroll) {
+    throw new ApiError(403, "You haven't enrolled in this course");
+  }
   const oldRating = await ratingModel.findOne({
     course,
-    rated_by: req.user._id,
+    rated_by: req.user._id
   });
   const course1 = await courseModel.findOne({ _id: course });
   let newAvgRating;
@@ -15,7 +24,7 @@ const addRating = asyncHandler(async (req, res) => {
     const newRating = await ratingModel.create({
       course: course,
       rated_by: req.user._id,
-      rating: star,
+      rating: star
     });
     newAvgRating =
       (course1.averageRating * course1.totalReview + star) /
@@ -24,7 +33,7 @@ const addRating = asyncHandler(async (req, res) => {
   } else {
     console.log(course1.averageRating);
     if (oldRating.rating == star)
-      return res.json(new ApiResponse(200, "Same Rating?"));
+      return res.json(new ApiResponse(200, 'Same Rating?'));
     // if user has already rated this course just update the course
     const updateRating = await ratingModel.updateOne(
       { _id: oldRating._id },
@@ -39,9 +48,9 @@ const addRating = asyncHandler(async (req, res) => {
 
   const saved = await course1.save();
   if (oldRating) {
-    res.json(new ApiResponse(201, "Rating Saved!", saved));
+    res.json(new ApiResponse(201, 'Rating Saved!', saved));
   } else {
-    res.json(new ApiResponse(200, "Rating updated!", saved));
+    res.json(new ApiResponse(200, 'Rating updated!', saved));
   }
 });
 
