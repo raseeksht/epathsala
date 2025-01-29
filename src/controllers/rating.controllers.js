@@ -3,6 +3,7 @@ import { ratingModel } from "../models/rating.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { courseModel } from "../models/course.model.js";
 import { ApiError } from '../utils/ApiError.js';
+import { userCourseEnrollModel } from '../models/userCourseEnroll.model.js';
 
 const addRating = asyncHandler(async (req, res) => {
   const { star, course } = req.body;
